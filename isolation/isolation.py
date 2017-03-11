@@ -269,7 +269,7 @@ class Board(object):
         """DEPRECATED - use Board.to_string()"""
         return self.to_string()
 
-    def to_string(self):
+    def to_string(self, indent=""):
         """Generate a string representation of the current game state, marking
         the location of each player and indicating which cells have been
         blocked, and which remain open.
@@ -278,14 +278,14 @@ class Board(object):
         p1_loc = self.__last_player_move__[self.__player_1__]
         p2_loc = self.__last_player_move__[self.__player_2__]
 
-        out = '   |'
+        out = "{}   |".format(indent)
 
         for i in range(self.width):
             out += " {} |".format(i)
         out += "\n\r"
 
         for i in range(self.height):
-            out += " {} | ".format(i)
+            out += "{} {} | ".format(indent, i)
 
             for j in range(self.width):
 

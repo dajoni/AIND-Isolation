@@ -244,6 +244,7 @@ if __name__ == "__main__":
     assert(player1 == game.active_player)
 
     # get a list of the legal moves available to the active player
+    print("Player 1 legal moves:")
     print(game.get_legal_moves())
 
     # get a successor of the current state by making a copy of the board and
