@@ -299,8 +299,6 @@ class CustomTest(unittest.TestCase):
         board.apply_move(starting_location)
         board.apply_move(adversary_location)
 
-        print("Initial board: \n{}".format(board.to_string()))
-
         for move in board.get_legal_moves():
             next_state = board.forecast_move(move)
             print("Visited board for move {}: \n{}".format(move, next_state.to_string()))

@@ -250,8 +250,71 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
+        # inspirational code:
+        # http://aima.cs.berkeley.edu/python/games.html
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
+        # print("{}Possible moves for input board is {}".format(self.indent, game.get_legal_moves()))
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if maximizing_player:
+            v = float("-inf")
+            smove = -1, -1
+            for move in game.get_legal_moves():
+                successor = game.forecast_move(move)
+                if successor.is_loser(game.active_player):
+                    return float("-inf"), move
+                elif successor.is_winner(game.active_player):
+                    return float("inf"), move
+
+                if depth == 1:
+                    nv = self.score(successor, game.active_player)
+                    # print("{}Scoring move {}".format(self.indent, move))
+                    # print(successor.to_string(indent=self.indent))
+                else:
+                    # print("{}Evaluating move {}".format(self.indent, move))
+                    # print(successor.to_string(indent=self.indent))
+                    # self.indent += "__"
+                    (nv, _) = self.alphabeta(successor, depth - 1, alpha, beta, False)
+                    # self.indent = self.indent[:-2]
+                # print("{}Score {}".format(self.indent, nv))
+                if nv >= beta:
+                    return nv, move
+                if nv > v:
+                    v = nv
+                    smove = move
+                alpha = max(alpha, v)
+            # print("{}Returning: score: {} move: {}".format(self.indent, v, smove))
+            return v, smove
+
+        if not maximizing_player:
+            v = float("inf")
+            smove = -1, -1
+            for move in game.get_legal_moves():
+                successor = game.forecast_move(move)
+                if successor.is_loser(game.inactive_player):
+                    return float("inf"), move
+                elif successor.is_winner(game.inactive_player):
+                    return float("-inf"), move
+
+                if depth == 1:
+                    nv = self.score(successor, game.inactive_player)
+                    # print("{}Scoring move {}".format(self.indent, move))
+                    # print(successor.to_string(indent=self.indent))
+                else:
+                    # print("{}Evaluating move {}".format(self.indent, move))
+                    # print(successor.to_string(indent=self.indent))
+                    # self.indent += "__"
+                    (nv, _) = self.alphabeta(successor, depth - 1, alpha, beta, True)
+                    # self.indent = self.indent[:-2]
+                # print("{}Score {}".format(self.indent, nv))
+                if nv <= alpha:
+                    return nv, move
+                if nv < v:
+                    v = nv
+                    smove = move
+                beta = min(beta, v)
+            # print("{}Returning: Score: {} move: {}".format(self.indent, v, smove))
+            return v, smove
+
+
