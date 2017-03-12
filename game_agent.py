@@ -151,8 +151,6 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        # inspirational code:
-        # http://aima.cs.berkeley.edu/python/games.html
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
@@ -250,8 +248,6 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        # inspirational code:
-        # http://aima.cs.berkeley.edu/python/games.html
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
