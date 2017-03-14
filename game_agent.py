@@ -7,7 +7,45 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
-from evaluation_fkt import *
+from isolation import Board
+
+
+def custom_score(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+    of the given player.
+
+    Note: this function should be called from within a Player instance as
+    `self.score()` -- you should not need to call this function directly.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : object
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
+    return free_spaces_around_player(game, player)
+
+
+def simple_score(game, player):
+    return random.random()
+
+
+def free_spaces_around_player(game, player):
+    (x, y) = game.get_player_location(player)
+    # topleft, bottomright
+    corners = [(max(0, min(6, x + x1)), max(0, min(6, y + y1))) for (x1, y1) in [(-2, -2), (2, 2)]]
+    area_to_check = [(row, col) for row in range(corners[0][0], corners[1][0])
+                     for col in range(corners[0][1], corners[1][1])]
+    return float(len([(row, col) for (row, col) in area_to_check if game.__board_state__[row][col] == Board.BLANK]))
 
 
 class Timeout(Exception):
@@ -57,6 +95,9 @@ class CustomPlayer:
             self.search_method = self.minimax
         elif method == 'alphabeta':
             self.search_method = self.alphabeta
+        # print("CustomPlayer[iterative: {}, method: {}, timeout: {}, search_depth: {}, score_fn: {}]".format(
+        #     iterative, method, timeout, search_depth, score_fn
+        # ))
 
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
@@ -104,6 +145,7 @@ class CustomPlayer:
 
         move = -1, -1
         score = float("-inf")
+        i = 1
 
         try:
             # The search method call (alpha beta or minimax) should happen in
@@ -111,7 +153,6 @@ class CustomPlayer:
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
             if self.iterative:
-                i = 1
                 while True:
                     score, move = self.search_method(game, i)
                     i += 1
@@ -119,6 +160,7 @@ class CustomPlayer:
                 score, move = self.search_method(game, self.search_depth)
 
         except Timeout:
+            # print("Got depth {}".format(i))
             # Handle any actions required at timeout, if necessary
             pass
 
@@ -161,63 +203,44 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # print("{}Possible moves for input board is {}".format(self.indent, game.get_legal_moves()))
+        moves = game.get_legal_moves()
+        if not moves:
+            return game.utility(self), (-1, -1)
 
         if maximizing_player:
-            v = float("-inf")
-            smove = -1, -1
-            for move in game.get_legal_moves():
-                successor = game.forecast_move(move)
-                if successor.is_loser(game.active_player):
-                    return float("-inf"), move
-                elif successor.is_winner(game.active_player):
-                    return float("inf"), move
-
-                if depth == 1:
-                    nv = self.score(successor, game.active_player)
-                    # print("{}Scoring move {}".format(self.indent, move))
-                    # print(successor.to_string(indent=self.indent))
-                else:
-                    # print("{}Evaluating move {}".format(self.indent, move))
-                    # print(successor.to_string(indent=self.indent))
-                    # self.indent += "__"
-                    (nv, _) = self.minimax(successor, depth - 1, False)
-                    # self.indent = self.indent[:-2]
+            if depth <= 1:
+                scores = [(self.score(game.forecast_move(move), self), move) for move in moves]
+                # print("{}Scoring move {}".format(self.indent, move))
+                # print(successor.to_string(indent=self.indent))
+            else:
+                # print("{}Evaluating move {}".format(self.indent, move))
+                # print(successor.to_string(indent=self.indent))
+                # self.indent += "__"
+                scores = [(self.minimax(game.forecast_move(move), depth - 1, not maximizing_player)[0], move)
+                          for move in moves]
+                # self.indent = self.indent[:-2]
                 # print("{}Score {}".format(self.indent, nv))
-                if nv > v:
-                    v = nv
-                    smove = move
-            # print("{}Returning: score: {} move: {}".format(self.indent, v, smove))
-            return v, smove
-
+            best_score = max(scores)
+        # print("{}Returning: score: {} move: {}".format(self.indent, v, smove))
         if not maximizing_player:
-            v = float("inf")
-            smove = -1, -1
-            for move in game.get_legal_moves():
-                successor = game.forecast_move(move)
-                if successor.is_loser(game.inactive_player):
-                    return float("inf"), move
-                elif successor.is_winner(game.inactive_player):
-                    return float("-inf"), move
-
-                if depth == 1:
-                    nv = self.score(successor, game.inactive_player)
-                    # print("{}Scoring move {}".format(self.indent, move))
-                    # print(successor.to_string(indent=self.indent))
-                else:
-                    # print("{}Evaluating move {}".format(self.indent, move))
-                    # print(successor.to_string(indent=self.indent))
-                    # self.indent += "__"
-                    (nv, _) = self.minimax(successor, depth - 1, True)
-                    # self.indent = self.indent[:-2]
+            if depth <= 1:
+                scores = [(self.score(game.forecast_move(move), self), move) for move in moves]
+                # print("{}Scoring move {}".format(self.indent, move))
+                # print(successor.to_string(indent=self.indent))
+            else:
+                # print("{}Evaluating move {}".format(self.indent, move))
+                # print(successor.to_string(indent=self.indent))
+                # self.indent += "__"
+                scores = [(self.minimax(game.forecast_move(move), depth - 1, not maximizing_player)[0], move)
+                          for move in moves]
+                # self.indent = self.indent[:-2]
                 # print("{}Score {}".format(self.indent, nv))
-                if nv < v:
-                    v = nv
-                    smove = move
-            # print("{}Returning: Score: {} move: {}".format(self.indent, v, smove))
-            return v, smove
+            best_score = min(scores)
+        # print("{}Returning: score: {} move: {}".format(self.indent, v, smove))
+        return best_score
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
+
         """Implement minimax search with alpha-beta pruning as described in the
         lectures.
 
@@ -258,66 +281,59 @@ class CustomPlayer:
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
+
         # print("{}Possible moves for input board is {}".format(self.indent, game.get_legal_moves()))
 
-        if maximizing_player:
-            v = float("-inf")
-            smove = -1, -1
-            for move in game.get_legal_moves():
-                successor = game.forecast_move(move)
-                if successor.is_loser(game.active_player):
-                    return float("-inf"), move
-                elif successor.is_winner(game.active_player):
-                    return float("inf"), move
+        moves = game.get_legal_moves()
 
-                if depth == 1:
-                    nv = self.score(successor, game.active_player)
+        if not moves:
+            return game.utility(self), (-1, -1)
+
+        if maximizing_player:
+            scores = []
+            for move in moves:
+                successor = game.forecast_move(move)
+
+                if depth <= 1:
+                    score = self.score(successor, self)
                     # print("{}Scoring move {}".format(self.indent, move))
                     # print(successor.to_string(indent=self.indent))
                 else:
                     # print("{}Evaluating move {}".format(self.indent, move))
                     # print(successor.to_string(indent=self.indent))
                     # self.indent += "__"
-                    (nv, _) = self.alphabeta(successor, depth - 1, alpha, beta, False)
+                    (score, _) = self.alphabeta(successor, depth - 1, alpha, beta, not maximizing_player)
                     # self.indent = self.indent[:-2]
-                # print("{}Score {}".format(self.indent, nv))
-                if nv >= beta:
-                    return nv, move
-                if nv > v:
-                    v = nv
-                    smove = move
-                alpha = max(alpha, v)
-            # print("{}Returning: score: {} move: {}".format(self.indent, v, smove))
-            return v, smove
+                scores.append((score, move))
+                # print("{}Score {}".format(self.indent, score))
+                if score >= beta:
+                    return score, move
+                if score > alpha:
+                    alpha = score
+            # print("{}Returning: score: {} move: {}".format(self.indent, max(scores)[0], max(scores)[1]))
+            best_move = max(scores)
 
         if not maximizing_player:
-            v = float("inf")
-            smove = -1, -1
-            for move in game.get_legal_moves():
+            scores = []
+            for move in moves:
                 successor = game.forecast_move(move)
-                if successor.is_loser(game.inactive_player):
-                    return float("inf"), move
-                elif successor.is_winner(game.inactive_player):
-                    return float("-inf"), move
-
-                if depth == 1:
-                    nv = self.score(successor, game.inactive_player)
+                if depth <= 1:
+                    score = self.score(successor, self)
                     # print("{}Scoring move {}".format(self.indent, move))
                     # print(successor.to_string(indent=self.indent))
                 else:
                     # print("{}Evaluating move {}".format(self.indent, move))
                     # print(successor.to_string(indent=self.indent))
                     # self.indent += "__"
-                    (nv, _) = self.alphabeta(successor, depth - 1, alpha, beta, True)
+                    (score, _) = self.alphabeta(successor, depth - 1, alpha, beta, not maximizing_player)
                     # self.indent = self.indent[:-2]
-                # print("{}Score {}".format(self.indent, nv))
-                if nv <= alpha:
-                    return nv, move
-                if nv < v:
-                    v = nv
-                    smove = move
-                beta = min(beta, v)
+                scores.append((score, move))
+                # print("{}Score {}".format(self.indent, score))
+                if score <= alpha:
+                    return score, move
+                if score < beta:
+                    beta = score
+            best_move = min(scores)
             # print("{}Returning: Score: {} move: {}".format(self.indent, v, smove))
-            return v, smove
 
-
+        return best_move
