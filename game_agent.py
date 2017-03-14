@@ -99,17 +99,24 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
-        if not legal_moves:
+        if not legal_moves or not game.get_legal_moves():
             return -1, -1
 
-        move = legal_moves[0]
+        move = -1, -1
+        score = float("-inf")
 
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            _, move = self.search_method(game, self.search_depth)
+            if self.iterative:
+                i = 1
+                while True:
+                    score, move = self.search_method(game, i)
+                    i += 1
+            else:
+                score, move = self.search_method(game, self.search_depth)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
