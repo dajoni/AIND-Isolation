@@ -127,6 +127,9 @@ class CustomPlayer:
             # print("CustomPlayer[iterative: {}, method: {}, timeout: {}, search_depth: {}, score_fn: {}]".format(
             #     iterative, method, timeout, search_depth, score_fn
             # ))
+        filename = "depth/{}_{}_{}.txt".format(score_fn.__name__, method, iterative)
+        print(filename)
+        self.file_log = open(filename, 'a')
 
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
@@ -190,6 +193,8 @@ class CustomPlayer:
         except Timeout:
             # print("Got depth {}".format(i))
             # Handle any actions required at timeout, if necessary
+            self.file_log.write("{}\n".format(i))
+            self.file_log.flush()
             pass
 
         # Return the best move from the last completed search iteration
