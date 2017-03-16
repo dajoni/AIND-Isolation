@@ -2,6 +2,7 @@
 
 ## Summary
 Three heuristic functions have been compared by using the supplied `tournament.py` script. I chose to base my heuristic functions on the number of blank spaces around the player. The overall results are as follows:
+
 * `ID_Improved` scored 60.54% percent
 * `Blank` scored 62.50%% 
 * `Blank IMP` scored 65.89%
