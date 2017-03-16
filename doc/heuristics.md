@@ -1,32 +1,10 @@
 # Evaluating Heuristics
 
 ## Summary
-Three heuristic functions have been compared by using the supplied `tournament.py` script. I chose to base my heuristic functions on the number of blank spaces around the player. The overall results are as follows:
-
-* `ID_Improved` scored 60.54% percent
-* `Blank` scored 62.50%% 
-* `Blank IMP` scored 65.89%
-* `Blank MOV` scored 67.57%
-
-With a 7 point gap, I have created a player with a different approach that performs better that `ID_Improved` with the provided `tournament.py` script. 
+Three heuristic functions have been compared by using the supplied `tournament.py` script. I chose to base my heuristic functions on the number of blank spaces around the player. This seems like a valid heuristic as two out of three variants beat `ID_Improved`.
 
 ### A note on `tournament.py`
 The implementation of the tournament script is random-based, meaning the results for each simulation is not reproducible.
-
-## Evaluating  `Blank MOV` against `ID_Improved` 
-```
-Playing Matches:
-----------
-  Match 1: Student Free Space vs ID_Improved 	Result: 212 to 188
-
-
-Results:
-----------
-Student Free Space     53.00%
-```
-
-When pitching the two agents against each other, it seems my agent barely beats `ID_Improved`. 
-
 
 ## Detailed results for `ID_Improved`
 Formula: `Moves - Opponent moves`
@@ -135,9 +113,41 @@ Results:
 ----------
 Blank MOV            66.96%
 ```
-Overall, this agent did better than the `Blank` and `Blank IMP` agents. Not by much, so I'm hesitant to draw any conclusions due to the randomness of the `tournament.py` script. 
+Overall, this agent did better than the `Blank` and `Blank IMP` agents but not by much. 
+
+## Evaluating  `Blank MOV` against `ID_Improved` 
+I've evaluated all three heuristics against the `ID_Improved` heuristic.
+
+```
+Match 1:    Blank    vs ID_Improved 	Result: 44 to 36
+Match 2:  Blank IMP  vs ID_Improved 	Result: 43 to 37
+Match 3:  Blank MOV  vs ID_Improved 	Result: 35 to 45
+```
+
+Interestingly, it seems that `Blank` and `Blank IMP` are relatively close in performance against `ID_Improved` and `Blank MOV` loses even though `Blank MOV` beat the baseline agents.
+
+## Depth of game tree
+I've collected data for how deep a tree gets build on average. This metric is interesting because it gives and indication of how expensive a heuristic is to calculate. The lower execution time, more nodes we can visit.
+
+Heuristic | Average | Max
+---------|----------|---------
+ ID_IMPROVED | 89.98 | 1845
+ BLANK     | 85.10 | 1819
+ BLANK IMP | 99.10 | 1831
+ BLANK MOV | 88.95 | 1835
+
+It seems all heuristics are somewhat similar in depth. Interestingly, `Blank IMP` goes deeper on average than `Blank`. Intuition says it should be the other way around. However, the results are consistent between multiple runs, so further invistigation is warrented.
+
+# Conclusion
+Based on the above discussions, I'd recommend going with the `Blank IMP` heuristic because:
+
+1. It has the 2nd best performance against the baseline agents and `ID_Improved` of the three heuristics, but is very close to the best perfomance in both cases.
+2. It considers both players available blank spaces.
+3. It reaches the highest average depth, hopefully discovering win-conditions earlier than the opponent.
 
 
 ## Future work
 * Investigate the values of each field surrounding the agent when evaluating the blank spaces
 * Better tournament evaluation, for reproducible comparisons.
+* Investigate the discrepancy in performance against `ID_Improved` and against the baseline agents for `Blank MOV`.
+* Investigate the performance of `Blank IMP` vs `Blank` for tree depth.
