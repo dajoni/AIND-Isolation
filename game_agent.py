@@ -32,7 +32,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    return free_spaces_around_player(game, player)
+    return free_spaces_around_player_minus_length(game, player)
 
 
 def simple_score(game, player):
@@ -40,12 +40,41 @@ def simple_score(game, player):
 
 
 def free_spaces_around_player(game, player):
+    if game.is_loser(player):
+        return 10000.0
+
+    if game.is_winner(player):
+        return 10000.0
     (x, y) = game.get_player_location(player)
+    # print ("coordinates: {},{}".format(x,y))
     # topleft, bottomright
     corners = [(max(0, min(6, x + x1)), max(0, min(6, y + y1))) for (x1, y1) in [(-2, -2), (2, 2)]]
-    area_to_check = [(row, col) for row in range(corners[0][0], corners[1][0])
-                     for col in range(corners[0][1], corners[1][1])]
-    return float(len([(row, col) for (row, col) in area_to_check if game.__board_state__[row][col] == Board.BLANK]))
+    # print("Corners: {}".format(corners))
+    area_to_check = [(row, col) for row in range(corners[0][0], corners[1][0] + 1)
+                     for col in range(corners[0][1], corners[1][1] + 1)]
+    # print("area_to_check: {}".format(area_to_check))
+    val = float(len([(row, col) for (row, col) in area_to_check if game.__board_state__[row][col] == Board.BLANK]))
+    # print(val)
+    return val
+
+
+def free_spaces_around_player_improved(game, player):
+    score_p1 = free_spaces_around_player(game, player)
+    p2 = game.get_opponent(player)
+    score_p2 = free_spaces_around_player(game, p2)
+    return score_p1 - score_p2
+
+
+def free_spaces_around_player_minus_length(game, player):
+    score_p1 = free_spaces_around_player(game, player)
+    # print("p1 score: {}".format(score_p1))
+    p2 = game.get_opponent(player)
+    # print("p1: {}, p2: {}".format(player, p2))
+    score_p2 = len(game.get_legal_moves(p2))
+    # print("score p2: {}".format(score_p2))
+    if not score_p2:
+        score_p2 = 1
+    return score_p1 / score_p2
 
 
 class Timeout(Exception):
@@ -95,9 +124,9 @@ class CustomPlayer:
             self.search_method = self.minimax
         elif method == 'alphabeta':
             self.search_method = self.alphabeta
-        # print("CustomPlayer[iterative: {}, method: {}, timeout: {}, search_depth: {}, score_fn: {}]".format(
-        #     iterative, method, timeout, search_depth, score_fn
-        # ))
+            # print("CustomPlayer[iterative: {}, method: {}, timeout: {}, search_depth: {}, score_fn: {}]".format(
+            #     iterative, method, timeout, search_depth, score_fn
+            # ))
 
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
@@ -144,7 +173,6 @@ class CustomPlayer:
             return -1, -1
 
         move = -1, -1
-        score = float("-inf")
         i = 1
 
         try:

@@ -31,9 +31,11 @@ from sample_players import null_score
 from sample_players import open_move_score
 from sample_players import improved_score
 from game_agent import CustomPlayer
-from game_agent import custom_score
+from game_agent import free_spaces_around_player
+from game_agent import free_spaces_around_player_improved
+from game_agent import free_spaces_around_player_minus_length
 
-NUM_MATCHES = 5  # number of matches against each opponent
+NUM_MATCHES = 20  # number of matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
 
 TIMEOUT_WARNING = "One or more agents lost a match this round due to " + \
@@ -136,7 +138,6 @@ def play_round(agents, num_matches):
 
 
 def main():
-
     HEURISTICS = [("Null", null_score),
                   ("Open", open_move_score),
                   ("Improved", improved_score)]
@@ -161,7 +162,15 @@ def main():
     # relative to the performance of the ID_Improved agent to account for
     # faster or slower computers.
     test_agents = [Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
-                   Agent(CustomPlayer(score_fn=custom_score, **CUSTOM_ARGS), "Student")]
+                   Agent(CustomPlayer(score_fn=free_spaces_around_player, **CUSTOM_ARGS), "Blank"),
+                   Agent(CustomPlayer(score_fn=free_spaces_around_player_minus_length, **CUSTOM_ARGS),
+                         "Blank IMP"),
+                   Agent(CustomPlayer(score_fn=free_spaces_around_player_improved, **CUSTOM_ARGS),
+                         "Blank MOV")
+                   ]
+    # test_agents = [Agent(CustomPlayer(score_fn=free_spaces_around_player_minus_length, **CUSTOM_ARGS),  "Student Free Space")]
+
+
 
     print(DESCRIPTION)
     for agentUT in test_agents:
@@ -171,6 +180,7 @@ def main():
         print("*************************")
 
         agents = random_agents + mm_agents + ab_agents + [agentUT]
+        # agents = ab_agents + [agentUT]
         win_ratio = play_round(agents, NUM_MATCHES)
 
         print("\n\nResults:")
